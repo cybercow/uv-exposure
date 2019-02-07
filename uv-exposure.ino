@@ -92,7 +92,7 @@ millisDelay screenSaverTimer;
 const int MENU_BLINK_INTERVAL = 400; // 0.4 seconds
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
 const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.5 seconds
-const long MASTER_TIMER_DEFAULT = 150000; // 2.5 minutes
+const long MASTER_TIMER_DEFAULT = 300000; // 5 minutes
 const long MASTER_TIMER_MAX = MASTER_TIMER_DEFAULT * 8;
 const int MASTER_TIMER_INCREMENT = 30000; // 30 seconds
 const bool SCREEN_SAVER_ENABLED = true;
@@ -150,7 +150,7 @@ void screenSaver(bool reset = false) {
    }
 
    if (!screenSaverTimer.isRunning())
-      screenSaverTimer.start(5000);
+      screenSaverTimer.start(MASTER_TIMER_DEFAULT * 0.25);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -272,6 +272,7 @@ void handleMenuOptions() {
         menuState = MENU_STATE_DEFAULT;
         menuOption = MENU_OPTION_DEFAULT;
         subMenuOption = SUBMENU_OPTION_DEFAULT;
+        screenSaver();
         return;         
     }
   
