@@ -1,4 +1,10 @@
 //////////////////////////////////////////////////////////////////////////
+//
+//
+//   ARDUINO MEGA2560 + LCD 20x4 (2004)
+//
+//
+//////////////////////////////////////////////////////////////////////////
 
 #include <Wire.h>
 #include <millisDelay.h>
@@ -79,11 +85,12 @@ SubMenuOption subMenuOption = SUBMENU_OPTION_DEFAULT;
 
 millisDelay menuBlink;
 millisDelay menuOptionExpiring;
+millisDelay subMenuOptionCommit;
 
 bool menuBlinkState = false;
 const int MENU_BLINK_INTERVAL = 450; // 0.5 seconds
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
-const int SUBMENU_OPTION_COMMIT_INTERVAL = 2000; // 2 seconds
+const int SUBMENU_OPTION_COMMIT_INTERVAL = 2500; // 2 seconds
 
 String lastMenuLine = "";
 String lastSubMenuLine = "";
@@ -166,11 +173,13 @@ SubMenuOption getSubMenuOption(bool next = false) {
       int ledStripState = 0;
       ledStripState += ledStripState1 ? 1 : 0;
       ledStripState += ledStripState2 ? 2 : 0;
-      res = SubMenuOption(SUBMENU_OPTION_LED_NO + ledStripState);
+      res = SubMenuOption(SUBMENU_OPTION_LED_NO + ledStripState);      
       if (next)
-         res = SubMenuOption(res + 1);
+         res = SubMenuOption(res + 1);      
       if (res > SUBMENU_OPTION_LED_FULL)
          res = SUBMENU_OPTION_LED_NO;
+      ledStripState1 = res == SUBMENU_OPTION_LED_ONE || res == SUBMENU_OPTION_LED_FULL;
+      ledStripState2 = res == SUBMENU_OPTION_LED_TWO || res == SUBMENU_OPTION_LED_FULL;
       break;
     }
     
@@ -183,6 +192,12 @@ SubMenuOption getSubMenuOption(bool next = false) {
 //////////////////////////////////////////////////////////////////////////
 
 void handleMenuOptions() {
+    if (subMenuOptionCommit.isFinished() && menuState == MENU_STATE_OPTION_ENABLED) {
+       menuState = MENU_STATE_DEFAULT;
+       menuOption = MENU_OPTION_DEFAULT;
+       return; 
+    }
+  
     if (menuOptionExpiring.isFinished() && menuState == MENU_STATE_AWAITING_CONFIRM) {
       menuState = MENU_STATE_DEFAULT;
       menuOption = MENU_OPTION_DEFAULT;
@@ -197,11 +212,6 @@ void handleMenuOptions() {
           /////////////////////////////////////////////
           if (menuState == MENU_STATE_OPTION_ENABLED) {
             subMenuOption = getSubMenuOption(true);
-            ledStripState1 = subMenuOption == SUBMENU_OPTION_LED_ONE || subMenuOption == SUBMENU_OPTION_LED_FULL;
-            ledStripState2 = subMenuOption == SUBMENU_OPTION_LED_TWO || subMenuOption == SUBMENU_OPTION_LED_FULL;
-            
-            Serial.println(ledStripState1);
-            Serial.println(ledStripState2);
             break;
           }
           
@@ -221,6 +231,12 @@ void handleMenuOptions() {
              menuState = MENU_STATE_OPTION_ENABLED;
              subMenuOption = getSubMenuOption();
           }
+          break;
+      }
+
+      case BUTTON_DEFAULT: {
+          if (menuState == MENU_STATE_OPTION_ENABLED)
+              subMenuOptionCommit.start(SUBMENU_OPTION_COMMIT_INTERVAL);
           break;
       }
       
@@ -247,6 +263,7 @@ void renderMenu() {
   switch(menuState) {
     case MENU_STATE_DEFAULT: {
       menuLine = menuItems[MENU_OPTION_DEFAULT];
+      subMenuLine = subMenuItems[SUBMENU_OPTION_DEFAULT];
       break;
     }
 
