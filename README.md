@@ -1,6 +1,5 @@
 # uv-exposure
    inspired by this: https:www.youtube.com/watch?v=ZAlxNNI-BVM
-   ... but different principle of operation:
    - minimalistic but functional UI on 4 rows 20 characters LCD
    - only one command (push) button (no rotary encoder or microswitches)
      use double clicks with continuous intuitive clicking for navigation
@@ -17,4 +16,4 @@
      then, i had Arduino Mega and 2004 LCD display laying around ...
      then, i wanted something just darned simple and practical to work my PCB's
 
-  (c)2019 by cybercow222
+  (c)2019 by cybercow222 / v0.1b

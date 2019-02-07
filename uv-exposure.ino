@@ -95,7 +95,7 @@ const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.5 seconds
 const long MASTER_TIMER_DEFAULT = 300000;
 const long MASTER_TIMER_MAX = MASTER_TIMER_DEFAULT * 3;
 const int MASTER_TIMER_INCREMENT = 30000; // 30 seconds
-const bool SCREEN_SAVER_ENABLED = false;
+const bool SCREEN_SAVER_ENABLED = true;
 const long SCREEN_SAVER_WAKEUP =  MASTER_TIMER_DEFAULT * 0.25;
 unsigned long masterTimerLength = MASTER_TIMER_DEFAULT;
 
@@ -136,6 +136,19 @@ char* timeToString(unsigned long ms) {
   int s = t % 60;
   sprintf(str, "%02d:%02d", m, s);
   return str;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+void switchOn(bool state = false) {
+  if (state) {
+    digitalWrite(LED_STRIP_PIN1, ledStripState1 ? HIGH : LOW);
+    digitalWrite(LED_STRIP_PIN2, ledStripState2 ? HIGH : LOW);
+    return;
+  }
+
+  digitalWrite(LED_STRIP_PIN1, LOW);
+  digitalWrite(LED_STRIP_PIN2, LOW);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -282,8 +295,7 @@ void handleMenuOptions() {
     }
 
     if (masterTimer.isFinished() && (menuOption == MENU_OPTION_STOP_DEFAULT || menuOption == MENU_OPTION_STOP)) {
-        digitalWrite(LED_STRIP_PIN1, LOW);
-        digitalWrite(LED_STRIP_PIN2, LOW);
+        switchOn(false);
         menuState = MENU_STATE_DEFAULT;
         menuOption = MENU_OPTION_DEFAULT;
         subMenuOption = SUBMENU_OPTION_DEFAULT;
@@ -295,14 +307,12 @@ void handleMenuOptions() {
       
       if (subMenuOption == SUBMENU_OPTION_START_YES) {
          masterTimer.start(masterTimerLength);
-         digitalWrite(LED_STRIP_PIN1, ledStripState1 ? HIGH : LOW);
-         digitalWrite(LED_STRIP_PIN2, ledStripState2 ? HIGH : LOW);
+         switchOn(true);
       }
 
       if (subMenuOption == SUBMENU_OPTION_STOP_YES) {
          masterTimer.stop();
-         digitalWrite(LED_STRIP_PIN1, LOW);
-         digitalWrite(LED_STRIP_PIN2, LOW);
+         switchOn(false);
       }
 
       if (subMenuOption == SUBMENU_OPTION_SET_RESET)
@@ -485,8 +495,7 @@ void setup() {
   /////////////////////////////////
   
   digitalWrite(LED_BUILTIN, HIGH);
-  digitalWrite(LED_STRIP_PIN1, LOW);
-  digitalWrite(LED_STRIP_PIN2, LOW);
+  switchOn(false);
 
   /////////////////////////////////
   
