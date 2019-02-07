@@ -28,6 +28,6 @@
 
   Will post the schematic and upload YT video ...
 
-  This is my first "real world usage" Arduino sketch so don't be too harsh ... but hey - it's working!
+  This is my first "real world usage" Arduino sketch so don't be too harsh ... but hey -> it's working!
   
   (c)2019 by cybercow222 / v0.1b
