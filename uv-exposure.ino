@@ -31,11 +31,23 @@ typedef enum {
 } MenuState;
 
 typedef enum {
-  BUTTON_DEFAULT,
-  BUTTON_DEFAULT_HI,
-  BUTTON_CLICK_2_PENDING,
-  BUTTON_CLICK_2,
-  BUTTON_CLICK_1
+   SUBMENU_OPTION_DEFAULT,
+   SUBMENU_OPTION_START_YES,
+   SUBMENU_OPTION_START_NO,
+   SUBMENU_OPTION_STOP_YES,
+   SUBMENU_OPTION_STOP_NO,
+   SUBMENU_OPTION_LED_NO,
+   SUBMENU_OPTION_LED_ONE,
+   SUBMENU_OPTION_LED_TWO,
+   SUBMENU_OPTION_LED_FULL
+} SubMenuOption;
+
+typedef enum {
+   BUTTON_DEFAULT,
+   BUTTON_DEFAULT_HI,
+   BUTTON_CLICK_2_PENDING,
+   BUTTON_CLICK_2,
+   BUTTON_CLICK_1
 } ButtonState;
 
 String menuItems[6] = { 
@@ -47,36 +59,51 @@ String menuItems[6] = {
   " SET <STOP> CONFIG "
 };
 
-String subMenuItems[8] = {
-  "Start => <Yes> - No ",
-  "Start =>  Yes - <No>",
-  "Stop => <Yes> - No ",
-  "Stop =>  Yes - <No>",
-  "LED1 [ ] - LED2 [ ] ",
-  "LED1 [x] - LED2 [ ] ",
-  "LED1 [ ] - LED2 [x] ",
-  "LED1 [x] - LED2 [x] "
+String subMenuItems[9] = {
+  "                    ",
+  "start: <yes> -  no  ",
+  "start:  yes  - <no> ",
+  "stop: <yes> -  no   ",
+  "stop:  yes  - <no>  ",
+  "led1 [ ] - led2 [ ] ",
+  "led1 [x] - led2 [ ] ",
+  "led1 [ ] - led2 [x] ",
+  "led1 [x] - led2 [x] "
 };
 
 //////////////////////////////////////////////////////////////////////////
 
 MenuOption menuOption = MENU_OPTION_DEFAULT;
 MenuState menuState = MENU_STATE_DEFAULT;
+SubMenuOption subMenuOption = SUBMENU_OPTION_DEFAULT;
+
 millisDelay menuBlink;
 millisDelay menuOptionExpiring;
+
 bool menuBlinkState = false;
-const int MENU_BLINK_INTERVAL = 550; // 0.5 seconds
+const int MENU_BLINK_INTERVAL = 450; // 0.5 seconds
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
+const int SUBMENU_OPTION_COMMIT_INTERVAL = 2000; // 2 seconds
+
 String lastMenuLine = "";
+String lastSubMenuLine = "";
 
 //////////////////////////////////////////////////////////////////////////
 
 int ledPin = 13;
 int switchPin = 12;
+int ledStripPin1 = 8;
+int ledStripPin2 = 9;
+
 unsigned long buttonLastClickTime = 0;
 ButtonState buttonState = BUTTON_DEFAULT;
 ButtonState lastButtonState = buttonState;
-const long doubleClickInterval = 300; 
+const long doubleClickInterval = 300; // 0.3 seconds
+
+//////////////////////////////////////////////////////////////////////////
+
+bool ledStripState1 = false;
+bool ledStripState2 = false;
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -118,6 +145,43 @@ void handleButton() {
 
 //////////////////////////////////////////////////////////////////////////
 
+SubMenuOption getSubMenuOption(bool next = false) {
+  SubMenuOption res = SUBMENU_OPTION_DEFAULT;
+  
+  switch(menuOption) {
+     case MENU_OPTION_SET: {
+      break;
+    }
+    
+    case MENU_OPTION_START: {
+      break;
+    }
+    
+    case MENU_OPTION_STOP: {
+      break;
+    }
+    
+    case MENU_OPTION_CONFIG: {
+      /////////////////////////////////////////////
+      int ledStripState = 0;
+      ledStripState += ledStripState1 ? 1 : 0;
+      ledStripState += ledStripState2 ? 2 : 0;
+      res = SubMenuOption(SUBMENU_OPTION_LED_NO + ledStripState);
+      if (next)
+         res = SubMenuOption(res + 1);
+      if (res > SUBMENU_OPTION_LED_FULL)
+         res = SUBMENU_OPTION_LED_NO;
+      break;
+    }
+    
+    default:
+      break;
+  }
+  return SubMenuOption(res);
+}
+
+//////////////////////////////////////////////////////////////////////////
+
 void handleMenuOptions() {
     if (menuOptionExpiring.isFinished() && menuState == MENU_STATE_AWAITING_CONFIRM) {
       menuState = MENU_STATE_DEFAULT;
@@ -130,6 +194,18 @@ void handleMenuOptions() {
       
     switch (buttonState) {
       case BUTTON_CLICK_1: {
+          /////////////////////////////////////////////
+          if (menuState == MENU_STATE_OPTION_ENABLED) {
+            subMenuOption = getSubMenuOption(true);
+            ledStripState1 = subMenuOption == SUBMENU_OPTION_LED_ONE || subMenuOption == SUBMENU_OPTION_LED_FULL;
+            ledStripState2 = subMenuOption == SUBMENU_OPTION_LED_TWO || subMenuOption == SUBMENU_OPTION_LED_FULL;
+            
+            Serial.println(ledStripState1);
+            Serial.println(ledStripState2);
+            break;
+          }
+          
+          /////////////////////////////////////////////
           MenuOption opt = MenuOption(menuOption + 1);
           if (opt > MENU_OPTION_CONFIG) 
             opt = MENU_OPTION_SET;
@@ -139,9 +215,11 @@ void handleMenuOptions() {
       }
       
       case BUTTON_CLICK_2: {
+          /////////////////////////////////////////////
           if (menuState == MENU_STATE_AWAITING_CONFIRM) {
              menuBlink.stop();
              menuState = MENU_STATE_OPTION_ENABLED;
+             subMenuOption = getSubMenuOption();
           }
           break;
       }
@@ -164,35 +242,44 @@ void handleMenuOptions() {
 void renderMenu() {
 
   String menuLine = "";
+  String subMenuLine = "";
   
   switch(menuState) {
-    case MENU_STATE_DEFAULT:
+    case MENU_STATE_DEFAULT: {
       menuLine = menuItems[MENU_OPTION_DEFAULT];
       break;
+    }
 
-    case MENU_STATE_AWAITING_CONFIRM:
+    case MENU_STATE_AWAITING_CONFIRM: {
       if (menuBlink.isFinished()) {
         menuBlinkState = !menuBlinkState;
         menuBlink.repeat();
       }
       menuLine = !menuBlinkState ? menuItems[menuOption] : menuItems[MENU_OPTION_DEFAULT];
       break;
+    }
 
-    case MENU_STATE_OPTION_ENABLED:
+    case MENU_STATE_OPTION_ENABLED: {
       menuLine = menuItems[menuOption];
+      subMenuLine = subMenuItems[subMenuOption];
       break;
+    }
 
     default:
       break;
   }
 
-  if (menuLine == lastMenuLine)
-    return;
-  
-  lastMenuLine = menuLine;
-  
-  lcd.setCursor(0,3);
-  lcd.print(menuLine);
+  if (menuLine != lastMenuLine) { 
+      lastMenuLine = menuLine;
+      lcd.setCursor(0,3);
+      lcd.print(menuLine);
+  }
+
+  if (subMenuLine != lastSubMenuLine) {
+      lastSubMenuLine = subMenuLine;
+      lcd.setCursor(0,2);
+      lcd.print(subMenuLine);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -213,6 +300,9 @@ void setup() {
 
   pinMode(ledPin, OUTPUT);
   pinMode(switchPin, INPUT);
+  pinMode(ledStripPin1, OUTPUT);
+  pinMode(ledStripPin2, OUTPUT);
+  
   digitalWrite(LED_BUILTIN, HIGH);
 
   /////////////////////////////////
