@@ -1,10 +1,26 @@
-//////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 //
+//   UV exposure box controller for making PCB's @ home
+//   working on ARDUINO MEGA2560 + LCD 20x4 (2004)
+//   inspired by this: https://www.youtube.com/watch?v=ZAlxNNI-BVM
+//   but different principle of operation:
+//   - minimalistic but functional UI on 4 rows 20 characters LCD
+//   - only one command (push) button (no rotary encoder or microswitches)
+//   - two indipendent timed channels, combine as you wish like for eg.:
+//     use 1st. channel for UV-LED strip for UV exposure of PCB
+//     use 2nd. channel for regular white LED strip and PCB/film inspection
+//     you got the idea, combine as you wish eg. 2 channels both for UV-LED
+//   - use two relays for powering both channels - or use a mosfet switch as
+//     did the author from the YT video bellow
+//   - take care of LED/PSU power to not exceed combined power of Arduino + 
+//     accessories + combined LED strips, i'm using 12V / 5Amps LED driver       
+//   - this is work in progress!
 //
-//   ARDUINO MEGA2560 + LCD 20x4 (2004)
+//  (c)2019 by cybercow222
 //
+//   v 0.1a
 //
-//////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 
 #include <Wire.h>
 #include <millisDelay.h>
@@ -38,10 +54,10 @@ typedef enum {
 
 typedef enum {
    SUBMENU_OPTION_DEFAULT,
-   SUBMENU_OPTION_START_YES,
    SUBMENU_OPTION_START_NO,
-   SUBMENU_OPTION_STOP_YES,
+   SUBMENU_OPTION_START_YES,
    SUBMENU_OPTION_STOP_NO,
+   SUBMENU_OPTION_STOP_YES,
    SUBMENU_OPTION_LED_NO,
    SUBMENU_OPTION_LED_ONE,
    SUBMENU_OPTION_LED_TWO,
@@ -67,10 +83,10 @@ String menuItems[6] = {
 
 String subMenuItems[9] = {
   "                    ",
-  "start: <yes> -  no  ",
   "start:  yes  - <no> ",
-  "stop: <yes> -  no   ",
+  "start: <yes> -  no  ",
   "stop:  yes  - <no>  ",
+  "stop: <yes> -  no   ",
   "led1 [ ] - led2 [ ] ",
   "led1 [x] - led2 [ ] ",
   "led1 [ ] - led2 [x] ",
@@ -88,9 +104,9 @@ millisDelay menuOptionExpiring;
 millisDelay subMenuOptionCommit;
 
 bool menuBlinkState = false;
-const int MENU_BLINK_INTERVAL = 450; // 0.5 seconds
+const int MENU_BLINK_INTERVAL = 400; // 0.4 seconds
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
-const int SUBMENU_OPTION_COMMIT_INTERVAL = 2500; // 2 seconds
+const int SUBMENU_OPTION_COMMIT_INTERVAL = 1500; // 2 seconds
 
 String lastMenuLine = "";
 String lastSubMenuLine = "";
@@ -161,6 +177,12 @@ SubMenuOption getSubMenuOption(bool next = false) {
     }
     
     case MENU_OPTION_START: {
+      /////////////////////////////////////////////
+      res = SUBMENU_OPTION_START_NO;
+      if (next)
+         res = SubMenuOption(res + 1);
+      if (res > SUBMENU_OPTION_START_NO)
+         res = SUBMENU_OPTION_START_NO;
       break;
     }
     
@@ -175,7 +197,7 @@ SubMenuOption getSubMenuOption(bool next = false) {
       ledStripState += ledStripState2 ? 2 : 0;
       res = SubMenuOption(SUBMENU_OPTION_LED_NO + ledStripState);      
       if (next)
-         res = SubMenuOption(res + 1);      
+         res = SubMenuOption(res + 1);   
       if (res > SUBMENU_OPTION_LED_FULL)
          res = SUBMENU_OPTION_LED_NO;
       ledStripState1 = res == SUBMENU_OPTION_LED_ONE || res == SUBMENU_OPTION_LED_FULL;
@@ -211,6 +233,7 @@ void handleMenuOptions() {
       case BUTTON_CLICK_1: {
           /////////////////////////////////////////////
           if (menuState == MENU_STATE_OPTION_ENABLED) {
+            subMenuOptionCommit.stop();
             subMenuOption = getSubMenuOption(true);
             break;
           }
