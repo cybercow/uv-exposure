@@ -92,10 +92,10 @@ millisDelay screenSaverTimer;
 const int MENU_BLINK_INTERVAL = 400; // 0.4 seconds
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
 const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.5 seconds
-const long MASTER_TIMER_DEFAULT = 300000; // 5 minutes
-const long MASTER_TIMER_MAX = MASTER_TIMER_DEFAULT * 8;
+const long MASTER_TIMER_DEFAULT = 300000;
+const long MASTER_TIMER_MAX = MASTER_TIMER_DEFAULT * 3;
 const int MASTER_TIMER_INCREMENT = 30000; // 30 seconds
-const bool SCREEN_SAVER_ENABLED = true;
+const bool SCREEN_SAVER_ENABLED = false;
 const long SCREEN_SAVER_WAKEUP =  MASTER_TIMER_DEFAULT * 0.25;
 unsigned long masterTimerLength = MASTER_TIMER_DEFAULT;
 
@@ -257,6 +257,17 @@ SubMenuOption getSubMenuOption(bool next = false) {
 
 //////////////////////////////////////////////////////////////////////////
 
+int digitalReadOutputPin(uint8_t pin) {
+   uint8_t bit = digitalPinToBitMask(pin);
+   uint8_t port = digitalPinToPort(pin);
+   if (port == NOT_A_PIN) 
+     return LOW;
+
+   return (*portOutputRegister(port) & bit) ? HIGH : LOW;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
 void handleMenuOptions() {
 
     if (SCREEN_SAVER_ENABLED && screenSaverActive && masterTimer.isRunning() && masterTimer.remaining() <= SCREEN_SAVER_WAKEUP) {
@@ -271,6 +282,8 @@ void handleMenuOptions() {
     }
 
     if (masterTimer.isFinished() && (menuOption == MENU_OPTION_STOP_DEFAULT || menuOption == MENU_OPTION_STOP)) {
+        digitalWrite(LED_STRIP_PIN1, LOW);
+        digitalWrite(LED_STRIP_PIN2, LOW);
         menuState = MENU_STATE_DEFAULT;
         menuOption = MENU_OPTION_DEFAULT;
         subMenuOption = SUBMENU_OPTION_DEFAULT;
@@ -440,8 +453,8 @@ void renderTime() {
 
 void renderStripStatus() {
      
-  String strip1Display = digitalRead(LED_STRIP_PIN1) ? "L1" : "  ";
-  String strip2Display = digitalRead(LED_STRIP_PIN2) ? "L2" : "  ";
+  String strip1Display = digitalReadOutputPin(LED_STRIP_PIN1) ? "L1" : "  ";
+  String strip2Display = digitalReadOutputPin(LED_STRIP_PIN2) ? "L2" : "  ";
 
   if (strip1Display != lastStrip1Display) {
       lcd.setCursor(14, 1);
