@@ -18,11 +18,6 @@ hd44780_I2Cexp lcd;
 //////////////////////////////////////////////////////////////////////////
 
 typedef enum {
-   MACHINE_STATUS_STANDBY,
-   MACHINE_STATUS_RUNNING
-} MachineState;
-
-typedef enum {
    MENU_OPTION_DEFAULT,
    MENU_OPTION_SET,
    MENU_OPTION_START,
@@ -88,19 +83,24 @@ MenuOption menuOption = MENU_OPTION_DEFAULT;
 MenuState menuState = MENU_STATE_DEFAULT;
 SubMenuOption subMenuOption = SUBMENU_OPTION_DEFAULT;
 
+millisDelay masterTimer;
 millisDelay menuBlink;
 millisDelay menuOptionExpiring;
 millisDelay subMenuOptionCommit;
-millisDelay masterTimer;
+millisDelay screenSaverTimer;
 
-bool menuBlinkState = false;
 const int MENU_BLINK_INTERVAL = 400; // 0.4 seconds
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
 const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.5 seconds
-const long MASTER_TIMER_DEFAULT = 300000; // 5 minutes
-const long MASTER_TIMER_MAX = MASTER_TIMER_DEFAULT * 4; // 20 minutes
-const int masterTimerIncrement = 30000; // 30 seconds
+const long MASTER_TIMER_DEFAULT = 150000; // 2.5 minutes
+const long MASTER_TIMER_MAX = MASTER_TIMER_DEFAULT * 8;
+const int MASTER_TIMER_INCREMENT = 30000; // 30 seconds
+const bool SCREEN_SAVER_ENABLED = true;
+const long SCREEN_SAVER_WAKEUP =  MASTER_TIMER_DEFAULT * 0.25;
 unsigned long masterTimerLength = MASTER_TIMER_DEFAULT;
+
+bool menuBlinkState = false;
+bool screenSaverActive = false;
 
 String lastMenuLine = "";
 String lastSubMenuLine = "";
@@ -134,6 +134,23 @@ char* timeToString(unsigned long ms) {
   int s = t % 60;
   sprintf(str, "%02d:%02d", m, s);
   return str;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+void screenSaver(bool reset = false) {
+   if (SCREEN_SAVER_ENABLED == false)
+      return;
+
+   if (reset) {
+      screenSaverTimer.stop();
+      lcd.backlight();
+      screenSaverActive = false;
+      return;
+   }
+
+   if (!screenSaverTimer.isRunning())
+      screenSaverTimer.start(5000);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -177,6 +194,7 @@ void handleButton() {
 //////////////////////////////////////////////////////////////////////////
 
 SubMenuOption getSubMenuOption(bool next = false) {
+  
   SubMenuOption res = SUBMENU_OPTION_DEFAULT;
   
   switch(menuOption) {
@@ -192,10 +210,10 @@ SubMenuOption getSubMenuOption(bool next = false) {
          break;
       
       if (next && res == SUBMENU_OPTION_SET_INCR)
-         masterTimerLength += masterTimerIncrement;
+         masterTimerLength += MASTER_TIMER_INCREMENT;
 
       if (next && masterTimerLength > MASTER_TIMER_MAX)
-         masterTimerLength = masterTimerIncrement;
+         masterTimerLength = MASTER_TIMER_INCREMENT;
       break;
     }
     
@@ -238,6 +256,25 @@ SubMenuOption getSubMenuOption(bool next = false) {
 //////////////////////////////////////////////////////////////////////////
 
 void handleMenuOptions() {
+
+    if (SCREEN_SAVER_ENABLED && screenSaverActive && masterTimer.isRunning() && masterTimer.remaining() <= SCREEN_SAVER_WAKEUP) {
+        screenSaver(true);
+        return;
+    }
+
+    if (SCREEN_SAVER_ENABLED && screenSaverTimer.isFinished()) {
+        lcd.noBacklight();
+        screenSaverActive = true;
+        return;
+    }
+
+    if (masterTimer.isFinished() && menuOption == MENU_OPTION_STOP_DEFAULT) {
+        menuState = MENU_STATE_DEFAULT;
+        menuOption = MENU_OPTION_DEFAULT;
+        subMenuOption = SUBMENU_OPTION_DEFAULT;
+        return;         
+    }
+  
     if (subMenuOptionCommit.isFinished() && menuState == MENU_STATE_OPTION_ENABLED) {
       
       if (subMenuOption == SUBMENU_OPTION_START_YES)
@@ -248,7 +285,6 @@ void handleMenuOptions() {
 
       if (subMenuOption == SUBMENU_OPTION_SET_RESET)
          masterTimerLength = MASTER_TIMER_DEFAULT;
-         
          
        menuState = MENU_STATE_DEFAULT;
        menuOption = masterTimer.isRunning() ?  MENU_OPTION_STOP_DEFAULT : MENU_OPTION_DEFAULT;
@@ -266,7 +302,14 @@ void handleMenuOptions() {
       return;
       
     switch (buttonState) {
+
       case BUTTON_CLICK_1: {
+          /////////////////////////////////////////////
+          if (screenSaverActive) {
+            screenSaver(true);
+            break;
+          }
+          
           /////////////////////////////////////////////
           if (menuState == MENU_STATE_OPTION_ENABLED) {
             subMenuOptionCommit.stop();
@@ -298,8 +341,11 @@ void handleMenuOptions() {
       }
 
       case BUTTON_DEFAULT: {
+          /////////////////////////////////////////////         
           if (menuState == MENU_STATE_OPTION_ENABLED)
               subMenuOptionCommit.start(SUBMENU_OPTION_COMMIT_INTERVAL);
+              
+          screenSaver();
           break;
       }
       
@@ -366,21 +412,33 @@ void renderMenu() {
 
 //////////////////////////////////////////////////////////////////////////
 
-void renderContent()
+void renderTime()
 {
   unsigned long t = masterTimer.isRunning() ? masterTimer.remaining() : masterTimerLength;
   String displayTime = timeToString(t);
-  
   if (lastTimerDisplay == displayTime)
     return;
   
   lcd.setCursor(0, 1);
   lcd.print("time:");
+  
   lcd.setCursor(6, 1);
   lcd.print(displayTime);
 
+  if (digitalRead(ledStripPin1)) {
+    lcd.setCursor(14, 1);
+    lcd.print("L1");
+  }
+
+  if (digitalRead(ledStripPin2)) {
+    lcd.setCursor(18, 1);
+    lcd.print("L2");
+  }
+
   lastTimerDisplay = displayTime;
 }
+
+//////////////////////////////////////////////////////////////////////////
 
 void setup() {
 
@@ -400,9 +458,14 @@ void setup() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("-- UV-PCB Scanner --");
+
+  /////////////////////////////////
+
+  screenSaver();
 }
 
 void loop () {
+  
   /////////////////////////////////
   
   handleButton();
@@ -417,7 +480,7 @@ void loop () {
   
   /////////////////////////////////
 
-  renderContent();
+  renderTime();
 
   /////////////////////////////////
 }
