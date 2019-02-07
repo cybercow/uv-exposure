@@ -34,7 +34,8 @@ hd44780_I2Cexp lcd;
 //////////////////////////////////////////////////////////////////////////
 
 typedef enum {
-   MACHINE_STATUS_STANDBY
+   MACHINE_STATUS_STANDBY,
+   MACHINE_STATUS_RUNNING
 } MachineState;
 
 typedef enum {
@@ -106,7 +107,7 @@ millisDelay subMenuOptionCommit;
 bool menuBlinkState = false;
 const int MENU_BLINK_INTERVAL = 400; // 0.4 seconds
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
-const int SUBMENU_OPTION_COMMIT_INTERVAL = 1500; // 2 seconds
+const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.5 seconds
 
 String lastMenuLine = "";
 String lastSubMenuLine = "";
@@ -180,8 +181,7 @@ SubMenuOption getSubMenuOption(bool next = false) {
       /////////////////////////////////////////////
       res = SUBMENU_OPTION_START_NO;
       if (next)
-         res = SubMenuOption(res + 1);
-      Serial.println(res);
+         res = subMenuOption == SUBMENU_OPTION_START_NO ? SUBMENU_OPTION_START_YES : SUBMENU_OPTION_START_NO;
       break;
     }
     
