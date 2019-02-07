@@ -2,7 +2,7 @@
 //
 //   UV exposure box controller for making PCB's @ home
 //   ARDUINO MEGA2560 + LCD 20x4 (2004)
-//   (c)2019 cybercow222 / v 0.1a
+//   (c)2019 cybercow222 / v 0.1b
 //
 /////////////////////////////////////////////////////////////////////////////////
 
