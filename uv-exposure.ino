@@ -9,7 +9,7 @@
 //   - two indipendent timed channels, combine as you wish like for eg.:
 //     use 1st. channel for UV-LED strip for UV exposure of PCB
 //     use 2nd. channel for regular white LED strip and PCB/film inspection
-//     you got the idea, combine as you wish eg. 2 channels both for UV-LED
+//     you got the idea, combine as you wish ...
 //   - use two relays for powering both channels - or use a MOSFET switch as
 //     did the author from the YT video bellow ...
 //   - take care of LED/PSU power to not exceed combined power of Arduino + 
@@ -103,14 +103,18 @@ SubMenuOption subMenuOption = SUBMENU_OPTION_DEFAULT;
 millisDelay menuBlink;
 millisDelay menuOptionExpiring;
 millisDelay subMenuOptionCommit;
+millisDelay masterTimer;
 
 bool menuBlinkState = false;
 const int MENU_BLINK_INTERVAL = 400; // 0.4 seconds
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
 const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.5 seconds
+const long MASTER_TIMER_DEFAULT = 600000; // 10 minutes
+unsigned long masterTimerLength = MASTER_TIMER_DEFAULT;
 
 String lastMenuLine = "";
 String lastSubMenuLine = "";
+String lastTimerDisplay = "";
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -128,6 +132,19 @@ const long doubleClickInterval = 300; // 0.3 seconds
 
 bool ledStripState1 = false;
 bool ledStripState2 = false;
+
+//////////////////////////////////////////////////////////////////////////
+
+char* timeToString(unsigned long ms) {
+  static char str[12];
+  unsigned long t = ms / 1000;
+  //long h = t / 3600;
+  t = t % 3600;
+  int m = t / 60;
+  int s = t % 60;
+  sprintf(str, "%02d:%02d", m, s);
+  return str;
+}
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -214,8 +231,12 @@ SubMenuOption getSubMenuOption(bool next = false) {
 
 void handleMenuOptions() {
     if (subMenuOptionCommit.isFinished() && menuState == MENU_STATE_OPTION_ENABLED) {
+      if (subMenuOption == SUBMENU_OPTION_START_YES)
+         masterTimer.start(masterTimerLength);
+         
        menuState = MENU_STATE_DEFAULT;
        menuOption = MENU_OPTION_DEFAULT;
+       subMenuOption = SUBMENU_OPTION_DEFAULT;
        return; 
     }
   
@@ -284,8 +305,8 @@ void renderMenu() {
   
   switch(menuState) {
     case MENU_STATE_DEFAULT: {
-      menuLine = menuItems[MENU_OPTION_DEFAULT];
-      subMenuLine = subMenuItems[SUBMENU_OPTION_DEFAULT];
+      menuLine = menuItems[menuOption];
+      subMenuLine = subMenuItems[subMenuOption];
       break;
     }
 
@@ -325,10 +346,17 @@ void renderMenu() {
 
 void renderContent()
 {
-  switch(menuState) {
-     case MENU_STATE_OPTION_ENABLED:
-        break;
-  }
+  unsigned long t = masterTimer.remaining();
+  String displayTime = timeToString(t);
+  if (lastTimerDisplay == displayTime)
+    return;
+  
+  lcd.setCursor(0, 1);
+  lcd.print("time:");
+  lcd.setCursor(6, 1);
+  lcd.print(displayTime);
+
+  lastTimerDisplay = displayTime;
 }
 
 void setup() {
@@ -341,7 +369,6 @@ void setup() {
   pinMode(switchPin, INPUT);
   pinMode(ledStripPin1, OUTPUT);
   pinMode(ledStripPin2, OUTPUT);
-  
   digitalWrite(LED_BUILTIN, HIGH);
 
   /////////////////////////////////
@@ -349,10 +376,7 @@ void setup() {
   lcd.begin(20, 4);
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.begin(20,4); 
   lcd.print("-- UV-PCB Scanner --");
-
-  Serial.println("setup ...");
 }
 
 void loop () {
