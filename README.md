@@ -3,10 +3,10 @@
    - minimalistic but functional UI on 4 rows 20 characters LCD
    - only one command (push) button (no rotary encoder or microswitches)
      use double clicks with continuous intuitive clicking for navigation
-   - two indipendent single timed channels, combine as you wish like for eg.:
+   - two independent - but single timed channels, combine as you wish like for eg.:
      use 1st. channel for UV-LED strip for UV exposure of PCB
      use 2nd. channel for regular white LED strip and PCB/film inspection
-     you got the idea, combine as you wish ...
+     you got the idea ...
    - use two relays for powering both channels - or use a MOSFET switch as
      did the author from the YT video bellow ...
    - take care of LED/PSU power to not exceed combined power of Arduino + 
