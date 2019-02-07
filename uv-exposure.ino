@@ -1,28 +1,8 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
 //   UV exposure box controller for making PCB's @ home
-//   working on ARDUINO MEGA2560 + LCD 20x4 (2004)
-//   inspired by this: https://www.youtube.com/watch?v=ZAlxNNI-BVM
-//   ... but different principle of operation:
-//   - minimalistic but functional UI on 4 rows 20 characters LCD
-//   - only one command (push) button (no rotary encoder or microswitches)
-//     use double clicks with continuous intuitive clicking for navigation
-//   - two indipendent single timed channels, combine as you wish like for eg.:
-//     use 1st. channel for UV-LED strip for UV exposure of PCB
-//     use 2nd. channel for regular white LED strip and PCB/film inspection
-//     you got the idea, combine as you wish ...
-//   - use two relays for powering both channels - or use a MOSFET switch as
-//     did the author from the YT video bellow ...
-//   - take care of LED/PSU power to not exceed combined power of Arduino + 
-//     accessories + combined LED strips, i'm using 12V / 5A LED driver       
-//   - this is work in progress!
-//   - why i did this ? well, my old scsi scanner had only one button :P, 
-//     then, i had Arduino Mega and 2004 LCD display laying around ...
-//     then, i wanted something just darned simple and practical to work my PCB's
-//
-//  (c)2019 by cybercow222
-//
-//   v 0.1a
+//   ARDUINO MEGA2560 + LCD 20x4 (2004)
+//   (c)2019 cybercow222 / v 0.1a
 //
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -203,14 +183,19 @@ SubMenuOption getSubMenuOption(bool next = false) {
      case MENU_OPTION_SET: {
       /////////////////////////////////////////////
       res = SUBMENU_OPTION_SET_RESET;
+      SubMenuOption last = subMenuOption;
+      
       if (next)
          res = SUBMENU_OPTION_SET_INCR;
-      if (next && res == SUBMENU_OPTION_SET_INCR) {
+
+      if (next && last != res)
+         break;
+      
+      if (next && res == SUBMENU_OPTION_SET_INCR)
          masterTimerLength += masterTimerIncrement;
-      }
-      if (masterTimerLength > MASTER_TIMER_MAX) {
-         masterTimerLength = 0;
-      }
+
+      if (next && masterTimerLength > MASTER_TIMER_MAX)
+         masterTimerLength = masterTimerIncrement;
       break;
     }
     
@@ -260,6 +245,10 @@ void handleMenuOptions() {
 
       if (subMenuOption == SUBMENU_OPTION_STOP_YES)
          masterTimer.stop();
+
+      if (subMenuOption == SUBMENU_OPTION_SET_RESET)
+         masterTimerLength = MASTER_TIMER_DEFAULT;
+         
          
        menuState = MENU_STATE_DEFAULT;
        menuOption = masterTimer.isRunning() ?  MENU_OPTION_STOP_DEFAULT : MENU_OPTION_DEFAULT;
