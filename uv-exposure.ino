@@ -105,13 +105,15 @@ bool screenSaverActive = false;
 String lastMenuLine = "";
 String lastSubMenuLine = "";
 String lastTimerDisplay = "";
+String lastStrip1Display = "";
+String lastStrip2Display = "";
 
 //////////////////////////////////////////////////////////////////////////
 
 int ledPin = 13;
 int switchPin = 12;
-int ledStripPin1 = 8;
-int ledStripPin2 = 9;
+int LED_STRIP_PIN1 = 8;
+int LED_STRIP_PIN2 = 9;
 
 unsigned long buttonLastClickTime = 0;
 ButtonState buttonState = BUTTON_DEFAULT;
@@ -268,21 +270,27 @@ void handleMenuOptions() {
         return;
     }
 
-    if (masterTimer.isFinished() && menuOption == MENU_OPTION_STOP_DEFAULT) {
+    if (masterTimer.isFinished() && (menuOption == MENU_OPTION_STOP_DEFAULT || menuOption == MENU_OPTION_STOP)) {
         menuState = MENU_STATE_DEFAULT;
         menuOption = MENU_OPTION_DEFAULT;
         subMenuOption = SUBMENU_OPTION_DEFAULT;
         screenSaver();
-        return;         
+        return;
     }
   
     if (subMenuOptionCommit.isFinished() && menuState == MENU_STATE_OPTION_ENABLED) {
       
-      if (subMenuOption == SUBMENU_OPTION_START_YES)
+      if (subMenuOption == SUBMENU_OPTION_START_YES) {
          masterTimer.start(masterTimerLength);
+         digitalWrite(LED_STRIP_PIN1, ledStripState1 ? HIGH : LOW);
+         digitalWrite(LED_STRIP_PIN2, ledStripState2 ? HIGH : LOW);
+      }
 
-      if (subMenuOption == SUBMENU_OPTION_STOP_YES)
+      if (subMenuOption == SUBMENU_OPTION_STOP_YES) {
          masterTimer.stop();
+         digitalWrite(LED_STRIP_PIN1, LOW);
+         digitalWrite(LED_STRIP_PIN2, LOW);
+      }
 
       if (subMenuOption == SUBMENU_OPTION_SET_RESET)
          masterTimerLength = MASTER_TIMER_DEFAULT;
@@ -294,13 +302,13 @@ void handleMenuOptions() {
     }
   
     if (menuOptionExpiring.isFinished() && menuState == MENU_STATE_AWAITING_CONFIRM) {
-      menuState = MENU_STATE_DEFAULT;
-      menuOption = !masterTimer.isRunning() ? MENU_OPTION_DEFAULT : MENU_OPTION_STOP_DEFAULT;
-      return;
+        menuState = MENU_STATE_DEFAULT;
+        menuOption = !masterTimer.isRunning() ? MENU_OPTION_DEFAULT : MENU_OPTION_STOP_DEFAULT;
+        return;
     }
   
     if (buttonState == lastButtonState)
-      return;
+        return;
       
     switch (buttonState) {
 
@@ -413,8 +421,7 @@ void renderMenu() {
 
 //////////////////////////////////////////////////////////////////////////
 
-void renderTime()
-{
+void renderTime() {
   unsigned long t = masterTimer.isRunning() ? masterTimer.remaining() : masterTimerLength;
   String displayTime = timeToString(t);
   if (lastTimerDisplay == displayTime)
@@ -426,17 +433,27 @@ void renderTime()
   lcd.setCursor(6, 1);
   lcd.print(displayTime);
 
-  if (digitalRead(ledStripPin1)) {
-    lcd.setCursor(14, 1);
-    lcd.print("L1");
-  }
-
-  if (digitalRead(ledStripPin2)) {
-    lcd.setCursor(18, 1);
-    lcd.print("L2");
-  }
-
   lastTimerDisplay = displayTime;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+void renderStripStatus() {
+     
+  String strip1Display = digitalRead(LED_STRIP_PIN1) ? "L1" : "  ";
+  String strip2Display = digitalRead(LED_STRIP_PIN2) ? "L2" : "  ";
+
+  if (strip1Display != lastStrip1Display) {
+      lcd.setCursor(14, 1);
+      lcd.print(strip1Display);
+      lastStrip1Display = strip1Display;
+  }
+
+  if (strip2Display != lastStrip2Display) {
+      lcd.setCursor(18, 1);
+      lcd.print(strip2Display);
+      lastStrip2Display = strip2Display;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -449,9 +466,14 @@ void setup() {
 
   pinMode(ledPin, OUTPUT);
   pinMode(switchPin, INPUT);
-  pinMode(ledStripPin1, OUTPUT);
-  pinMode(ledStripPin2, OUTPUT);
+  pinMode(LED_STRIP_PIN1, OUTPUT);
+  pinMode(LED_STRIP_PIN2, OUTPUT);
+
+  /////////////////////////////////
+  
   digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(LED_STRIP_PIN1, LOW);
+  digitalWrite(LED_STRIP_PIN2, LOW);
 
   /////////////////////////////////
   
@@ -466,8 +488,6 @@ void setup() {
 }
 
 void loop () {
-  
-  /////////////////////////////////
   
   handleButton();
 
@@ -484,6 +504,10 @@ void loop () {
   renderTime();
 
   /////////////////////////////////
+
+  renderStripStatus(); 
+
+ 
 }
 
 /*
