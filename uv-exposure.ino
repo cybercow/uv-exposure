@@ -6,7 +6,8 @@
 //   ... but different principle of operation:
 //   - minimalistic but functional UI on 4 rows 20 characters LCD
 //   - only one command (push) button (no rotary encoder or microswitches)
-//   - two indipendent timed channels, combine as you wish like for eg.:
+//     use double clicks with continuous intuitive clicking for navigation
+//   - two indipendent single timed channels, combine as you wish like for eg.:
 //     use 1st. channel for UV-LED strip for UV exposure of PCB
 //     use 2nd. channel for regular white LED strip and PCB/film inspection
 //     you got the idea, combine as you wish ...
