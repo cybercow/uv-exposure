@@ -27,5 +27,7 @@
   Maybe would be fun to add some Buzzer to register menu commands, will add it later ...
 
   Will post the schematic and upload YT video ...
+
+  This is my first "real world usage" Arduino sketch so don't be too harsh ... but hey - it's working!
   
   (c)2019 by cybercow222 / v0.1b
