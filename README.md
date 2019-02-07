@@ -3,9 +3,9 @@
    - minimalistic but functional UI on 4 rows 20 characters LCD
    - only one command (microswitch/push) button (no rotary encoder or multiple microswitches)
      use double clicks with continuous intuitive clicking for navigation
-   - two independent - but single timed channels, combine as you wish like for eg.:
+   - two independent - but single timed channels, combine as you wish like for eg.:  
      use 1st. channel for UV-LED strip for UV exposure of PCB
-     use 2nd. channel for regular white LED strip and PCB/film inspection
+     use 2nd. channel for regular white LED strip and PCB/film inspection;  
      you got the idea ...
    - use two relays for powering both channels - or use a MOSFET switch as
      did the author from the YT video bellow ...
@@ -19,4 +19,11 @@
   This should fit on Arduino Uno, but i didn't had any @ the moment so here you go
   with the Mega ... 
 
+  I added a small (but smart) screen saver to save some power when not used for some time
+  it will respectively turn on/off the LCD backlight ...
+
+  I'm using 12V relays with 2 driver TUN transistors like BC547 or whatever ...
+
+  Will post the schematic and upload YT video ...
+  
   (c)2019 by cybercow222 / v0.1b
