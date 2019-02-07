@@ -16,4 +16,7 @@
      then, i had Arduino Mega and 2004 LCD display laying around ...
      then, i wanted something just darned simple and practical to work my PCB's
 
+  This should fit on Arduino Uno, but i didn't had any @ the moment so here you go
+  with the Mega ... 
+
   (c)2019 by cybercow222 / v0.1b
