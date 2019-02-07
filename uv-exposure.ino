@@ -16,6 +16,9 @@
 //   - take care of LED/PSU power to not exceed combined power of Arduino + 
 //     accessories + combined LED strips, i'm using 12V / 5A LED driver       
 //   - this is work in progress!
+//   - why i did this ? well, my old scsi scanner had only one button :P, 
+//     then, i had Arduino Mega and 2004 LCD display laying around ...
+//     then, i wanted something just darned simple and practical to work my PCB's
 //
 //  (c)2019 by cybercow222
 //
@@ -56,6 +59,8 @@ typedef enum {
 
 typedef enum {
    SUBMENU_OPTION_DEFAULT,
+   SUBMENU_OPTION_SET_RESET,
+   SUBMENU_OPTION_SET_INCR,
    SUBMENU_OPTION_START_NO,
    SUBMENU_OPTION_START_YES,
    SUBMENU_OPTION_STOP_NO,
@@ -83,12 +88,14 @@ String menuItems[6] = {
   " ----- <STOP> ----- "
 };
 
-String subMenuItems[9] = {
+String subMenuItems[11] = {
   "                    ",
-  "start:  yes  - <no> ",
-  "start: <yes> -  no  ",
-  "stop:  yes  - <no>  ",
-  "stop: <yes> -  no   ",
+  "reset [x] - incr [ ]",
+  "reset [ ] - incr [x]",
+  "start   yes  - <no> ",
+  "start  <yes> -  no  ",
+  "stop   yes  - <no>  ",
+  "stop  <yes> -  no   ",
   "led1 [ ] - led2 [ ] ",
   "led1 [x] - led2 [ ] ",
   "led1 [ ] - led2 [x] ",
@@ -110,9 +117,10 @@ bool menuBlinkState = false;
 const int MENU_BLINK_INTERVAL = 400; // 0.4 seconds
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
 const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.5 seconds
-const long MASTER_TIMER_DEFAULT = 600000; // 10 minutes
+const long MASTER_TIMER_DEFAULT = 300000; // 5 minutes
+const long MASTER_TIMER_MAX = MASTER_TIMER_DEFAULT * 4; // 20 minutes
+const int masterTimerIncrement = 30000; // 30 seconds
 unsigned long masterTimerLength = MASTER_TIMER_DEFAULT;
-int masterTimerIncrement = 30000; // 30 seconds
 
 String lastMenuLine = "";
 String lastSubMenuLine = "";
@@ -194,7 +202,15 @@ SubMenuOption getSubMenuOption(bool next = false) {
   switch(menuOption) {
      case MENU_OPTION_SET: {
       /////////////////////////////////////////////
-      Serial.println("set");
+      res = SUBMENU_OPTION_SET_RESET;
+      if (next)
+         res = SUBMENU_OPTION_SET_INCR;
+      if (next && res == SUBMENU_OPTION_SET_INCR) {
+         masterTimerLength += masterTimerIncrement;
+      }
+      if (masterTimerLength > MASTER_TIMER_MAX) {
+         masterTimerLength = 0;
+      }
       break;
     }
     
