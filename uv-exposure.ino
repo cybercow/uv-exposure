@@ -145,9 +145,9 @@ void screenSaver(bool reset = false) {
       return;
 
    if (reset) {
+      screenSaverActive = false;
       screenSaverTimer.stop();
       lcd.backlight();
-      screenSaverActive = false;
       return;
    }
 
@@ -315,8 +315,8 @@ void handleMenuOptions() {
       case BUTTON_CLICK_1: {
           /////////////////////////////////////////////
           if (screenSaverActive) {
-            screenSaver(true);
-            break;
+              screenSaver(true);
+              break;
           }
           
           /////////////////////////////////////////////
