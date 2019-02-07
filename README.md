@@ -1,7 +1,7 @@
 # uv-exposure
    inspired by this: https:www.youtube.com/watch?v=ZAlxNNI-BVM
    - minimalistic but functional UI on 4 rows 20 characters LCD
-   - only one command (push) button (no rotary encoder or microswitches)
+   - only one command (microswitch/push) button (no rotary encoder or multiple microswitches)
      use double clicks with continuous intuitive clicking for navigation
    - two independent - but single timed channels, combine as you wish like for eg.:
      use 1st. channel for UV-LED strip for UV exposure of PCB
