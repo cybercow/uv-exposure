@@ -78,8 +78,8 @@ String menuItems[6] = {
   "<SET> START  CONFIG ", 
   " SET <START> CONFIG ",
   " SET  START <CONFIG>",
-  " SET  STOP  CONFIG ",
-  " SET <STOP> CONFIG "
+  " -----  STOP  ----- ",
+  " ----- <STOP> ----- "
 };
 
 String subMenuItems[9] = {
@@ -111,6 +111,7 @@ const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
 const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.5 seconds
 const long MASTER_TIMER_DEFAULT = 600000; // 10 minutes
 unsigned long masterTimerLength = MASTER_TIMER_DEFAULT;
+int masterTimerIncrement = 30000; // 30 seconds
 
 String lastMenuLine = "";
 String lastSubMenuLine = "";
@@ -191,6 +192,8 @@ SubMenuOption getSubMenuOption(bool next = false) {
   
   switch(menuOption) {
      case MENU_OPTION_SET: {
+      /////////////////////////////////////////////
+      Serial.println("set");
       break;
     }
     
@@ -203,6 +206,9 @@ SubMenuOption getSubMenuOption(bool next = false) {
     }
     
     case MENU_OPTION_STOP: {
+      res = SUBMENU_OPTION_STOP_NO;
+      if (next)
+        res = subMenuOption == SUBMENU_OPTION_STOP_NO ? SUBMENU_OPTION_STOP_YES : SUBMENU_OPTION_STOP_NO;
       break;
     }
     
@@ -231,18 +237,22 @@ SubMenuOption getSubMenuOption(bool next = false) {
 
 void handleMenuOptions() {
     if (subMenuOptionCommit.isFinished() && menuState == MENU_STATE_OPTION_ENABLED) {
+      
       if (subMenuOption == SUBMENU_OPTION_START_YES)
          masterTimer.start(masterTimerLength);
+
+      if (subMenuOption == SUBMENU_OPTION_STOP_YES)
+         masterTimer.stop();
          
        menuState = MENU_STATE_DEFAULT;
-       menuOption = MENU_OPTION_DEFAULT;
+       menuOption = masterTimer.isRunning() ?  MENU_OPTION_STOP_DEFAULT : MENU_OPTION_DEFAULT;
        subMenuOption = SUBMENU_OPTION_DEFAULT;
        return; 
     }
   
     if (menuOptionExpiring.isFinished() && menuState == MENU_STATE_AWAITING_CONFIRM) {
       menuState = MENU_STATE_DEFAULT;
-      menuOption = MENU_OPTION_DEFAULT;
+      menuOption = !masterTimer.isRunning() ? MENU_OPTION_DEFAULT : MENU_OPTION_STOP_DEFAULT;
       return;
     }
   
@@ -257,11 +267,15 @@ void handleMenuOptions() {
             subMenuOption = getSubMenuOption(true);
             break;
           }
-          
+        
           /////////////////////////////////////////////
           MenuOption opt = MenuOption(menuOption + 1);
-          if (opt > MENU_OPTION_CONFIG) 
+          if (!masterTimer.isRunning() && opt > MENU_OPTION_CONFIG) 
             opt = MENU_OPTION_SET;
+
+          if (masterTimer.isRunning())
+            opt = MENU_OPTION_STOP;
+              
           menuOption = opt;
           menuState = MENU_STATE_AWAITING_CONFIRM;
           break;
@@ -315,7 +329,9 @@ void renderMenu() {
         menuBlinkState = !menuBlinkState;
         menuBlink.repeat();
       }
-      menuLine = !menuBlinkState ? menuItems[menuOption] : menuItems[MENU_OPTION_DEFAULT];
+
+      MenuOption defopt = !masterTimer.isRunning() ? MENU_OPTION_DEFAULT : MENU_OPTION_STOP_DEFAULT;
+      menuLine = !menuBlinkState ? menuItems[menuOption] : menuItems[defopt];
       break;
     }
 
@@ -346,8 +362,9 @@ void renderMenu() {
 
 void renderContent()
 {
-  unsigned long t = masterTimer.remaining();
+  unsigned long t = masterTimer.isRunning() ? masterTimer.remaining() : masterTimerLength;
   String displayTime = timeToString(t);
+  
   if (lastTimerDisplay == displayTime)
     return;
   
