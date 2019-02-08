@@ -1,8 +1,8 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
 //   UV exposure box controller for making PCB's @ home
-//   ARDUINO MEGA2560 + LCD 20x4 (2004)
-//   (c)2019 cybercow222 / v 0.1b
+//   ARDUINO MEGA 2560 + LCD 20x4 (2004)
+//   (c)2019 cybercow222 / v 0.2b
 //
 /////////////////////////////////////////////////////////////////////////////////
 
@@ -89,14 +89,34 @@ millisDelay menuOptionExpiring;
 millisDelay subMenuOptionCommit;
 millisDelay screenSaverTimer;
 
+// interval between 2 consequent clicks that will be registered as "double click"
+const int DOUBLE_CLICK_INTERVAL = 300; // 0.3 seconds
+
+// interval between blinking option on screen menu
 const int MENU_BLINK_INTERVAL = 400; // 0.4 seconds
+
+// time when activated menu option will expire to default menu state
 const int MENU_OPTION_EXPIRING_INTERVAL = 10000; // 10 seconds
-const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.5 seconds
-const long MASTER_TIMER_DEFAULT = 300000;
+
+// time when selected submenu option will be accepted
+const int SUBMENU_OPTION_COMMIT_INTERVAL = 1250; // 1.25 seconds
+
+// the main timer default length, usually the PCB UV exposure goes for ~5 minutes or such
+const long MASTER_TIMER_DEFAULT = 300000; // 5 minutes
+
+// maximum main interval length that can be reached
 const long MASTER_TIMER_MAX = MASTER_TIMER_DEFAULT * 3;
+
+// increments (or resolution) of setting the interval - 30 seconds should be enough
 const int MASTER_TIMER_INCREMENT = 30000; // 30 seconds
+
+// simple screen saver to save some power
 const bool SCREEN_SAVER_ENABLED = true;
+
+// time before main timer finishing the lcd will be lit
 const long SCREEN_SAVER_WAKEUP =  MASTER_TIMER_DEFAULT * 0.25;
+
+// the changeable length of the main timer
 unsigned long masterTimerLength = MASTER_TIMER_DEFAULT;
 
 bool menuBlinkState = false;
@@ -118,7 +138,6 @@ int LED_STRIP_PIN2 = 9;
 unsigned long buttonLastClickTime = 0;
 ButtonState buttonState = BUTTON_DEFAULT;
 ButtonState lastButtonState = buttonState;
-const long doubleClickInterval = 300; // 0.3 seconds
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -130,7 +149,6 @@ bool ledStripState2 = false;
 char* timeToString(unsigned long ms) {
   static char str[12];
   unsigned long t = ms / 1000;
-  //long h = t / 3600;
   t = t % 3600;
   int m = t / 60;
   int s = t % 60;
@@ -177,31 +195,26 @@ void handleButton() {
   if (readSwitch == HIGH && buttonState == BUTTON_DEFAULT) {
      buttonLastClickTime = currentMillis;
      buttonState = BUTTON_DEFAULT_HI;
-     //Serial.println("BUTTON_DEFAULT_HI");
      return;
   }
 
-  if (readSwitch == LOW && buttonState == BUTTON_DEFAULT_HI && currentMillis - buttonLastClickTime <= doubleClickInterval) {
+  if (readSwitch == LOW && buttonState == BUTTON_DEFAULT_HI && currentMillis - buttonLastClickTime <= DOUBLE_CLICK_INTERVAL) {
      buttonState = BUTTON_CLICK_2_PENDING;
-     //Serial.println("BUTTON_CLICK_2_PENDING");
      return;
   }
 
-  if (readSwitch == HIGH && buttonState == BUTTON_CLICK_2_PENDING && currentMillis - buttonLastClickTime <= doubleClickInterval) {
+  if (readSwitch == HIGH && buttonState == BUTTON_CLICK_2_PENDING && currentMillis - buttonLastClickTime <= DOUBLE_CLICK_INTERVAL) {
      buttonState = BUTTON_CLICK_2;
-     //Serial.println("BUTTON_CLICK_2");
      return;
   }
 
-  if (readSwitch == LOW && (buttonState == BUTTON_CLICK_2_PENDING) && currentMillis - buttonLastClickTime > doubleClickInterval) {
+  if (readSwitch == LOW && (buttonState == BUTTON_CLICK_2_PENDING) && currentMillis - buttonLastClickTime > DOUBLE_CLICK_INTERVAL) {
      buttonState = BUTTON_CLICK_1;
-     //Serial.println("BUTTON_CLICK_1");
      return;
   }
   
-  if (readSwitch == LOW && buttonState != BUTTON_DEFAULT && currentMillis - buttonLastClickTime > doubleClickInterval + 50) {
+  if (readSwitch == LOW && buttonState != BUTTON_DEFAULT && currentMillis - buttonLastClickTime > DOUBLE_CLICK_INTERVAL + 50) {
      buttonState = BUTTON_DEFAULT;
-     //Serial.println("BUTTON_DEFAULT");
      return;
   }
 }
@@ -241,6 +254,7 @@ SubMenuOption getSubMenuOption(bool next = false) {
     }
     
     case MENU_OPTION_STOP: {
+      /////////////////////////////////////////////
       res = SUBMENU_OPTION_STOP_NO;
       if (next)
         res = subMenuOption == SUBMENU_OPTION_STOP_NO ? SUBMENU_OPTION_STOP_YES : SUBMENU_OPTION_STOP_NO;
@@ -265,6 +279,7 @@ SubMenuOption getSubMenuOption(bool next = false) {
     default:
       break;
   }
+
   return SubMenuOption(res);
 }
 
@@ -450,9 +465,6 @@ void renderTime() {
   if (lastTimerDisplay == displayTime)
     return;
   
-  lcd.setCursor(0, 1);
-  lcd.print("time:");
-  
   lcd.setCursor(6, 1);
   lcd.print(displayTime);
 
@@ -501,8 +513,12 @@ void setup() {
   
   lcd.begin(20, 4);
   lcd.clear();
+
   lcd.setCursor(0, 0);
   lcd.print("-- UV-PCB Scanner --");
+
+  lcd.setCursor(0, 1);
+  lcd.print("time:");
 
   /////////////////////////////////
 
@@ -513,22 +529,13 @@ void loop () {
   
   handleButton();
 
-  /////////////////////////////////
-
   handleMenuOptions();
-  
-  /////////////////////////////////
-  
+
   renderMenu();
-  
-  /////////////////////////////////
 
   renderTime();
 
-  /////////////////////////////////
-
-  renderStripStatus(); 
-
+  renderStripStatus();
  
 }
 

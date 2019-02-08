@@ -1,0 +1,4 @@
+- there is some bug with screen saver turning off the LCD backlight while it should been deactivated
+- add a buzzer to have fun with clicks ...
+- add the schematics
+
