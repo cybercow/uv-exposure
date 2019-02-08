@@ -30,4 +30,7 @@
 
   This is my first "real world usage" Arduino sketch so don't be too harsh ... but hey -> it's working!
   
+  The project uses a handy non blocking timer library found here:
+  https://www.forward.com.au/pfod/ArduinoProgramming/TimingDelaysInArduino.html
+
   (c)2019 by cybercow222 / v0.1b
