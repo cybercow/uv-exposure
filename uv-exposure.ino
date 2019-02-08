@@ -114,7 +114,7 @@ const int MASTER_TIMER_INCREMENT = 30000; // 30 seconds
 const bool SCREEN_SAVER_ENABLED = true;
 
 // time before main timer finishing the lcd will be lit
-const long SCREEN_SAVER_WAKEUP =  MASTER_TIMER_DEFAULT * 0.25;
+const long SCREEN_SAVER_WAKEUP = MASTER_TIMER_DEFAULT * 0.25;
 
 // the changeable length of the main timer
 unsigned long masterTimerLength = MASTER_TIMER_DEFAULT;
@@ -539,11 +539,3 @@ void loop () {
  
 }
 
-/*
- * 
- *In addition to the start(delay), isFinished() and repeat() functions illustrated above, the millisDelay library also has stop() to stop the delay timing out, 
- *isRunning() to check if it has not already timed out and has not been stopped, 
- *restart() to restart the delay from now, using the same delay interval, finish() to force the delay to expire early, 
- *remaining() to return the number of milliseconds until the delay is finished and delay() to return the delay value that was passed to start()
- * 
- */
