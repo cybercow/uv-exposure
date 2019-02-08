@@ -119,6 +119,20 @@ const long SCREEN_SAVER_WAKEUP = MASTER_TIMER_DEFAULT * 0.25;
 // the changeable length of the main timer
 unsigned long masterTimerLength = MASTER_TIMER_DEFAULT;
 
+// built-in led pin
+const int LED_PIN = 13;
+
+// control button pin
+const int SWITCH_PIN = 12;
+
+// output for first control channel
+const int LED_STRIP_PIN1 = 8;
+
+// output for second control channel
+const int LED_STRIP_PIN2 = 9;
+
+//////////////////////////////////////////////////////////////////////////
+
 bool menuBlinkState = false;
 bool screenSaverActive = false;
 
@@ -129,11 +143,6 @@ String lastStrip1Display = "";
 String lastStrip2Display = "";
 
 //////////////////////////////////////////////////////////////////////////
-
-int ledPin = 13;
-int switchPin = 12;
-int LED_STRIP_PIN1 = 8;
-int LED_STRIP_PIN2 = 9;
 
 unsigned long buttonLastClickTime = 0;
 ButtonState buttonState = BUTTON_DEFAULT;
@@ -189,7 +198,7 @@ void screenSaver(bool reset = false) {
 //////////////////////////////////////////////////////////////////////////
 
 void handleButton() { 
-  int readSwitch = digitalRead(switchPin);
+  int readSwitch = digitalRead(SWITCH_PIN);
   unsigned long currentMillis = millis();
   
   if (readSwitch == HIGH && buttonState == BUTTON_DEFAULT) {
@@ -499,8 +508,8 @@ void setup() {
 
   /////////////////////////////////
 
-  pinMode(ledPin, OUTPUT);
-  pinMode(switchPin, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(SWITCH_PIN, INPUT);
   pinMode(LED_STRIP_PIN1, OUTPUT);
   pinMode(LED_STRIP_PIN2, OUTPUT);
 
