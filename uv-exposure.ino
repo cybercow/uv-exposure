@@ -89,6 +89,8 @@ millisDelay menuOptionExpiring;
 millisDelay subMenuOptionCommit;
 millisDelay screenSaverTimer;
 
+//////////////////////////////////////////////////////////////////////////
+
 // interval between 2 consequent clicks that will be registered as "double click"
 const int DOUBLE_CLICK_INTERVAL = 300; // 0.3 seconds
 
