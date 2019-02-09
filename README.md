@@ -6,7 +6,7 @@
    - two independent - but single timed channels, combine as you wish like for eg.:  
      use 1st. channel for UV-LED strip for UV exposure of PCB
      use 2nd. channel for regular white LED strip and PCB/film inspection; you got the idea ...
-   - use two relays for powering both channels - or use a MOSFET switch as
+   - use two relays for powering both channels - or use a transistor switch as
      did the author from the YT video bellow ...
    - take care of LED/PSU power to not exceed combined power of Arduino + 
      accessories + combined LED strips, i'm using 12V / 5A LED driver       
@@ -19,7 +19,8 @@
   it will respectively turn on/off the LCD backlight ... eg. if the timer is running the
   screen will turn on again before timer end, etc.
 
-  I'm using 12V relays with 2 driver TUN transistors like BC547 or whatever ...
+  I'm using 12V relays with 2 driver TUN transistors like BC547 or whatever you have @ your hand
+  add 2 pull-down resistors to prevent output fizzle if the state is unknown [we don't like mad relays].
 
   Maybe would be fun to add some Buzzer to register menu commands, will add it later ...
 
