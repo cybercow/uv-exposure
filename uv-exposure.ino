@@ -361,13 +361,12 @@ void handleMenuOptions() {
       
     switch (buttonState) {
       case BUTTON_DEFAULT_HI:
-          screenSaver(true);
           break;
 
       case BUTTON_CLICK_1: {
           /////////////////////////////////////////////
           if (screenSaverActive) {
-              screenSaverActive = false;
+              screenSaver(true);
               break;
           }
           
