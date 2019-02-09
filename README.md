@@ -12,11 +12,8 @@
      accessories + combined LED strips, i'm using 12V / 5A LED driver       
    - this is work in progress!
    - why i did this ? well, my old scsi scanner had only one button :P, 
-     then, i had Arduino Mega and 2004 LCD display laying around ...
+     then, i had Arduino and 2004 LCD display laying around ...
      then, i wanted something just darned simple and practical to work my PCB's
-
-  This sketch should fit on Arduino Uno, but i didn't had any @ the moment so here you go
-  with the Mega ... 
 
   I added a small (but smart) screen saver to save some power when not used for some time
   it will respectively turn on/off the LCD backlight ... eg. if the timer is running the

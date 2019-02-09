@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 //
 //   UV exposure box controller for making PCB's @ home
-//   ARDUINO MEGA 2560 + LCD 20x4 (2004)
+//   ARDUINO UNO + LCD 20x4 (2004)
 //   (c)2019 cybercow222 / v 0.2b
 //
 /////////////////////////////////////////////////////////////////////////////////
@@ -187,7 +187,6 @@ void screenSaver(bool reset = false) {
       return;
 
    if (reset) {
-      screenSaverActive = false;
       screenSaverTimer.stop();
       lcd.backlight();
       return;
@@ -360,11 +359,14 @@ void handleMenuOptions() {
         return;
       
     switch (buttonState) {
+      case BUTTON_DEFAULT_HI:
+          screenSaver(true);
+          break;
 
       case BUTTON_CLICK_1: {
           /////////////////////////////////////////////
           if (screenSaverActive) {
-              screenSaver(true);
+              screenSaverActive = false;
               break;
           }
           
@@ -549,4 +551,3 @@ void loop () {
   renderStripStatus();
  
 }
-
