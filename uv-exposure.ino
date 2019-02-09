@@ -187,6 +187,7 @@ void screenSaver(bool reset = false) {
       return;
 
    if (reset) {
+      screenSaverActive = false;
       screenSaverTimer.stop();
       lcd.backlight();
       return;
